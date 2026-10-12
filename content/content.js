@@ -236,6 +236,9 @@
       if (latestSolution.fill_in_text) {
         detailHtml += `<b>Điền từ:</b> ${latestSolution.fill_in_text}<br>`;
       }
+      if (latestSolution.source_citation) {
+        detailHtml += `<div style="background:#064e3b; border-left:3px solid #10b981; padding:4px 6px; border-radius:4px; margin:4px 0; font-size:11px; color:#a7f3d0;">📖 <b>Trích dẫn tài liệu gốc:</b><br><i>"${latestSolution.source_citation}"</i></div>`;
+      }
       if (latestSolution.explanation) {
         detailHtml += `<b>Giải thích:</b> ${latestSolution.explanation}`;
       }

@@ -36,6 +36,16 @@
 * **Bước 3 (Sang bài mới):**
   * Nhấn biểu tượng dấu **✕** trên badge ngữ cảnh (hoặc chỉ cần bấm `Alt + L` thu bài nghe mới), ngữ cảnh cũ sẽ được tự động làm mới!
 
+### 3. Chế độ NotebookLM (Source-Grounded Mode - Tìm chính xác từ tài liệu ôn tập):
+* Mở Popup extension, tại mục **📚 Nguồn Tài Liệu (NotebookLM Mode)**:
+  * Bấm **📁 Tải file tài liệu** và chọn file đề cương, slide, ngân hàng câu hỏi (`.txt`, `.md`, `.pdf`, `.json`).
+  * Bật công tắc **Bật nguồn tài liệu**.
+* Khi bạn làm bài thi (bấm `Alt + S` hoặc `Alt + L`):
+  * Gemini sẽ **chỉ tìm kiếm và đối chiếu đáp án trong tài liệu bạn đã tải lên** (Zero Hallucination).
+  * Widget sẽ hiển thị: **Đáp án đúng** + **Trích dẫn câu văn nguyên văn làm bằng chứng** từ chính tài liệu của bạn!
+
+---
+
 ## 🌐 Khả năng tương thích nền tảng (Universal Platform Support)
 Extension được thiết kế theo mô hình **Hybrid Adaptor**, hoạt động trơn tru trên:
 * **Skillups Platform** (Được tối ưu hóa nhận diện chuyên sâu)

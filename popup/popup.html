@@ -56,6 +56,25 @@
       </div>
     </div>
 
+    <!-- NotebookLM Source Grounding -->
+    <div class="section" style="background:#1e1b4b; border:1px solid #6366f1; border-radius:8px; padding:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label style="color:#c7d2fe; font-weight:700;">📚 Nguồn Tài Liệu (NotebookLM Mode)</label>
+        <label class="switch" style="transform: scale(0.8);" title="Bật/Tắt chế độ chỉ tìm trong tài liệu">
+          <input type="checkbox" id="sourceModeEnabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="hint" style="color:#a5b4fc; margin-top:2px;">Chỉ tìm & đối chiếu đáp án trong tài liệu bạn tải lên (Slide, Đề cương, PDF, TXT).</p>
+      
+      <div style="margin-top:8px; display:flex; gap:6px;">
+        <input type="file" id="sourceFileInput" accept=".txt,.md,.json,.pdf" style="display:none;">
+        <button id="uploadSourceBtn" type="button" class="btn secondary" style="font-size:11px; padding:6px 10px; flex:1;">📁 Tải file tài liệu</button>
+        <button id="clearSourceBtn" type="button" class="btn secondary" style="font-size:11px; padding:6px 8px; display:none; color:#f87171;" title="Xóa tài liệu">🗑️</button>
+      </div>
+      <div id="sourceFileInfo" style="display:none; font-size:11px; color:#34d399; margin-top:6px; word-break:break-all;"></div>
+    </div>
+
     <div class="section footer-actions">
       <button id="saveBtn" class="btn primary">Lưu cấu hình</button>
       <button id="testBtn" class="btn secondary">Kiểm tra kết nối</button>

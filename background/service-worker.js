@@ -183,7 +183,10 @@ async function handleCaptureAndSolve(windowId, audioContext = "") {
   const config = await chrome.storage.local.get({
     geminiApiKey: "",
     geminiModel: "auto",
-    enabled: true
+    enabled: true,
+    sourceMode: false,
+    sourceContent: "",
+    sourceName: ""
   });
 
   if (!config.enabled) {
@@ -219,7 +222,7 @@ async function handleCaptureAndSolve(windowId, audioContext = "") {
   // Tách Base64 từ Data URL (data:image/jpeg;base64,....)
   const base64Data = screenshotUrl.replace(/^data:image\/(jpeg|png);base64,/, "");
 
-  // 2. Thiết kế System Instruction chuyên dụng cho thị giác máy (Vision Parser)
+  // 2. Thiết kế System Instruction chuyên dụng (Hỗ trợ Grounded RAG / NotebookLM Mode)
   let systemInstruction = `
 Bạn là một AI giám khảo chuyên giải đề thi trắc nghiệm bằng cách đọc ảnh chụp màn hình trực tiếp.
 Nhiệm vụ của bạn:
@@ -228,6 +231,13 @@ Nhiệm vụ của bạn:
 3. Nếu có sơ đồ, mã nguồn, hình ảnh minh họa trong câu hỏi, hãy phân tích kỹ.
 4. Xác định đáp án chính xác nhất.
 `.trim();
+
+  if (config.sourceMode && config.sourceContent) {
+    systemInstruction += `\n\nCHẾ ĐỘ NOTEBOOKLM (SOURCE-GROUNDED MODE):
+- Bạn được cung cấp một TÀI LIỆU NGUỒN GỐC (Knowledge Source: ${config.sourceName || "Tài liệu ôn tập"}).
+- BẮT BUỘC bạn phải tìm kiếm và đối chiếu câu hỏi/đáp án dựa trên nội dung TÀI LIỆU NGUỒN này.
+- Trong kết quả trả về, bạn PHẢI trích dẫn câu văn/đoạn trích chính xác từ tài liệu làm bằng chứng vào trường "source_citation".`;
+  }
 
   if (audioContext) {
     systemInstruction += `\n\nLƯU Ý ĐẶC BIỆT: Đây là câu hỏi liên quan đến bài nghe Listening. Hãy sử dụng NGỮ CẢNH BÀI NGHE (AUDIO TRANSCRIPT) được cung cấp dưới đây để đối chiếu với câu hỏi trên ảnh và đưa ra đáp án chính xác nhất.`;
@@ -239,6 +249,7 @@ Nhiệm vụ của bạn:
   "question_type": "single_choice" | "multiple_choice" | "fill_in_the_blank",
   "selected_option_letters": ["A"],
   "selected_option_texts": ["Dòng chữ chính xác của đáp án được chọn để match trên trang web"],
+  "source_citation": "Trích đoạn nguyên văn chứng minh từ tài liệu nguồn (nếu có)",
   "fill_in_text": "Nội dung cần điền nếu là câu hỏi điền từ",
   "explanation": "Giải thích ngắn gọn 1-2 câu lý do chọn",
   "confidence": 0.95
@@ -257,9 +268,19 @@ Quy tắc:
     }
   ];
 
+  let promptContextText = "";
+
+  if (config.sourceMode && config.sourceContent) {
+    promptContextText += `[TÀI LIỆU NGUỒN ÔN TẬP GỐC (${config.sourceName || "Source"})]:\n"""\n${config.sourceContent}\n"""\n\n`;
+  }
+
   if (audioContext) {
+    promptContextText += `[NGỮ CẢNH BÀI NGHE ĐÃ THU ĐƯỢC TRƯỚC ĐÓ]:\n"""\n${audioContext}\n"""\n\n`;
+  }
+
+  if (promptContextText) {
     parts.push({
-      text: `[NGỮ CẢNH BÀI NGHE ĐÃ THU ĐƯỢC TRƯỚC ĐÓ]:\n"""\n${audioContext}\n"""\n\nHãy đọc ảnh chụp màn hình câu hỏi hiện tại, đối chiếu với ngữ cảnh bài nghe trên để chọn đáp án đúng theo JSON schema.`
+      text: `${promptContextText}Hãy đọc ảnh chụp màn hình câu hỏi hiện tại, đối chiếu với tài liệu/ngữ cảnh trên để chọn đáp án đúng theo JSON schema.`
     });
   } else {
     parts.push({

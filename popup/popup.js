@@ -7,23 +7,88 @@ document.addEventListener("DOMContentLoaded", async () => {
   const testBtn = document.getElementById("testBtn");
   const statusMsg = document.getElementById("statusMessage");
 
+  const sourceModeEnabled = document.getElementById("sourceModeEnabled");
+  const sourceFileInput = document.getElementById("sourceFileInput");
+  const uploadSourceBtn = document.getElementById("uploadSourceBtn");
+  const clearSourceBtn = document.getElementById("clearSourceBtn");
+  const sourceFileInfo = document.getElementById("sourceFileInfo");
+
   // Load saved config
   chrome.storage.local.get(
     {
       geminiApiKey: "",
       geminiModel: "auto",
       mode: "semi-auto",
-      enabled: true
+      enabled: true,
+      sourceMode: false,
+      sourceName: "",
+      sourceSize: 0
     },
     (items) => {
       apiKeyInput.value = items.geminiApiKey;
       modelSelect.value = items.geminiModel;
       extensionEnabled.checked = items.enabled;
+      sourceModeEnabled.checked = items.sourceMode;
 
       const modeRadio = document.querySelector(`input[name="mode"][value="${items.mode}"]`);
       if (modeRadio) modeRadio.checked = true;
+
+      if (items.sourceName) {
+        showSourceInfo(items.sourceName, items.sourceSize);
+      }
     }
   );
+
+  // File Upload Handlers
+  uploadSourceBtn.addEventListener("click", () => sourceFileInput.click());
+
+  sourceFileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    showStatus("Đang đọc và xử lý file tài liệu...", "success");
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const content = evt.target.result;
+      const sizeKb = Math.round(file.size / 1024);
+
+      // Lưu nội dung file vào chrome.storage.local
+      await chrome.storage.local.set({
+        sourceContent: content,
+        sourceName: file.name,
+        sourceSize: sizeKb,
+        sourceMode: true
+      });
+
+      sourceModeEnabled.checked = true;
+      showSourceInfo(file.name, sizeKb);
+      showStatus(`✅ Đã nạp tài liệu "${file.name}" (${sizeKb} KB)!`, "success");
+    };
+
+    reader.onerror = () => {
+      showStatus("❌ Lỗi khi đọc file tài liệu.", "error");
+    };
+
+    reader.readAsText(file);
+  });
+
+  clearSourceBtn.addEventListener("click", async () => {
+    await chrome.storage.local.remove(["sourceContent", "sourceName", "sourceSize"]);
+    await chrome.storage.local.set({ sourceMode: false });
+    sourceModeEnabled.checked = false;
+    sourceFileInfo.style.display = "none";
+    clearSourceBtn.style.display = "none";
+    uploadSourceBtn.textContent = "📁 Tải file tài liệu";
+    showStatus("Đã xóa tài liệu nguồn.", "success");
+  });
+
+  function showSourceInfo(name, sizeKb) {
+    sourceFileInfo.innerHTML = `📄 <b>${name}</b> (${sizeKb} KB) - <i>Đã sẵn sàng</i>`;
+    sourceFileInfo.style.display = "block";
+    clearSourceBtn.style.display = "inline-block";
+    uploadSourceBtn.textContent = "🔄 Thay file khác";
+  }
 
   // Toggle API key visibility
   toggleKeyBtn.addEventListener("click", () => {
@@ -42,13 +107,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const model = modelSelect.value;
     const mode = document.querySelector('input[name="mode"]:checked')?.value || "semi-auto";
     const enabled = extensionEnabled.checked;
+    const sourceMode = sourceModeEnabled.checked;
 
     chrome.storage.local.set(
       {
         geminiApiKey: key,
         geminiModel: model,
         mode: mode,
-        enabled: enabled
+        enabled: enabled,
+        sourceMode: sourceMode
       },
       () => {
         showStatus("Đã lưu cài đặt thành công!", "success");
