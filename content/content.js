@@ -40,7 +40,7 @@
     widget.id = "skillups-ai-widget";
     widget.innerHTML = `
       <div class="widget-header" id="widget-toggle">
-        <span class="widget-title">⚡ Skillups AI Solver</span>
+        <span class="widget-title">🔮 AncestralWhisper</span>
         <span id="widget-minimize">▼</span>
       </div>
       <div class="widget-body" id="widget-content">
@@ -259,7 +259,7 @@
     }
   }
 
-  // 3. Highlight đáp án dựa trên nội dung text hoặc nhãn A, B, C, D
+  // 3. Highlight đáp án: Hỗ trợ chuyên sâu Skillups + Universal (Google Forms, Moodle, Quizizz, Canvas, v.v.)
   function highlightAnswerOnScreen(solution) {
     clearHighlights();
 
@@ -268,21 +268,47 @@
 
     if (targets.length === 0 && letters.length === 0) return;
 
-    // Tìm tất cả các thẻ có thể là option (li, label, div, button, p)
-    const elements = Array.from(document.querySelectorAll("label, li, div, button, p, span"));
+    // Platform Adaptors: Các selector ứng viên của nhiều nền tảng thi phổ biến
+    const quizCandidateSelectors = [
+      // 1. Skillups & custom LMS
+      ".option-item", ".answer-item", ".choice", ".question-option",
+      // 2. Google Forms
+      "[role='radio']", "[role='checkbox']", ".docssharedWizToggleLabeledContainer",
+      // 3. Moodle / Canvas LMS / Blackboard
+      ".form-check", ".r0", ".r1", ".answer label", ".answers div",
+      // 4. Quizizz / Kahoot / Azota
+      "[data-testid*='option']", ".option-container", ".answer-tile",
+      // 5. Thẻ chuẩn HTML
+      "label", "li"
+    ];
 
-    elements.forEach(el => {
+    let candidateElements = [];
+    for (const sel of quizCandidateSelectors) {
+      const found = document.querySelectorAll(sel);
+      if (found.length > 0) {
+        candidateElements.push(...Array.from(found));
+      }
+    }
+
+    // Nếu không có selector chuyên dụng, quét tất cả div/button/p/span
+    if (candidateElements.length === 0) {
+      candidateElements = Array.from(document.querySelectorAll("div, button, p, span"));
+    }
+
+    const uniqueCandidates = [...new Set(candidateElements)];
+
+    uniqueCandidates.forEach(el => {
       // Bỏ qua widget của extension
       if (el.closest("#skillups-ai-widget")) return;
 
       const text = el.innerText?.trim();
-      if (!text || text.length < 1 || text.length > 250) return;
+      if (!text || text.length < 1 || text.length > 300) return;
 
-      // Kiểm tra khớp nội dung text của đáp án
+      // Kiểm tra khớp nội dung chữ đáp án (Fuzzy matching)
       const matchedText = targets.some(targetText => {
-        const cleanTarget = targetText.toLowerCase().trim();
-        const cleanEl = text.toLowerCase();
-        return cleanEl.includes(cleanTarget) && (cleanEl.length - cleanTarget.length < 40);
+        const cleanTarget = targetText.toLowerCase().replace(/^[a-d][\.\:\)]\s*/, "").trim();
+        const cleanEl = text.toLowerCase().replace(/^[a-d][\.\:\)]\s*/, "").trim();
+        return (cleanEl.includes(cleanTarget) || cleanTarget.includes(cleanEl)) && Math.abs(cleanEl.length - cleanTarget.length) < 50;
       });
 
       // Hoặc khớp nhãn A., B., C., D. ở đầu câu
@@ -292,7 +318,7 @@
       });
 
       if (matchedText || matchedLetter) {
-        const parentChoice = el.closest("li, label, div[role='radio'], div[role='checkbox']") || el;
+        const parentChoice = el.closest("[role='radio'], [role='checkbox'], li, label, .form-check, .option-item") || el;
         if (!parentChoice.classList.contains("skillups-ai-highlighted-answer")) {
           parentChoice.classList.add("skillups-ai-highlighted-answer");
           const badge = document.createElement("span");
@@ -305,32 +331,49 @@
     });
   }
 
-  // 4. Áp dụng đáp án vào trang web (Click hoặc Fill text)
+  // 4. Áp dụng đáp án vào trang web (Mô phỏng chuỗi sự kiện người dùng toàn diện)
   function applySolutionToDOM() {
     if (!latestSolution) return;
 
     // 1. Nếu là dạng điền từ
     if (latestSolution.fill_in_text) {
-      const inputs = document.querySelectorAll("input[type='text']:not(#apiKey), textarea");
+      const inputs = document.querySelectorAll("input[type='text']:not(#apiKey), input:not([type]), textarea, [contenteditable='true']");
       inputs.forEach(inp => {
         if (!inp.closest("#skillups-ai-widget")) {
           inp.focus();
-          inp.value = latestSolution.fill_in_text;
+          if (inp.isContentEditable) {
+            inp.innerText = latestSolution.fill_in_text;
+          } else {
+            inp.value = latestSolution.fill_in_text;
+          }
           inp.dispatchEvent(new Event("input", { bubbles: true }));
           inp.dispatchEvent(new Event("change", { bubbles: true }));
         }
       });
     }
 
-    // 2. Click vào element đã được highlight
+    // 2. Click vào element đã được highlight (Universal Synthetic Click Event)
     const highlighted = document.querySelectorAll(".skillups-ai-highlighted-answer");
     if (highlighted.length > 0) {
       highlighted.forEach(el => {
-        const input = el.querySelector("input[type='radio'], input[type='checkbox']");
-        const clickable = input || el;
-        ["mousedown", "mouseup", "click"].forEach(eventType => {
-          clickable.dispatchEvent(new MouseEvent(eventType, { bubbles: true, cancelable: true, view: window }));
+        const input = el.querySelector("input[type='radio'], input[type='checkbox']") || el;
+        
+        // Chuỗi event kích hoạt đầy đủ để vượt qua React, Vue, Angular event handlers
+        ["pointerdown", "mousedown", "focus", "pointerup", "mouseup", "click"].forEach(eventType => {
+          const evt = new MouseEvent(eventType, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            buttons: 1
+          });
+          input.dispatchEvent(evt);
         });
+
+        // Đảm bảo checked state nếu là input radio/checkbox
+        if (input.tagName === "INPUT" && (input.type === "radio" || input.type === "checkbox")) {
+          input.checked = true;
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
       });
     }
 
@@ -444,6 +487,7 @@
   // 6. Phím tắt: 
   // Alt + S: Chụp màn hình giải bài đọc/trắc nghiệm
   // Alt + L: Bật/Tắt thu âm giải bài Listening (Mặc định tắt)
+  // Alt + H: Ẩn / Hiện Widget nhanh (dành cho khi lướt web thông thường)
   window.addEventListener("keydown", (e) => {
     if (e.altKey && (e.key === "s" || e.key === "S")) {
       e.preventDefault();
@@ -452,6 +496,13 @@
     if (e.altKey && (e.key === "l" || e.key === "L")) {
       e.preventDefault();
       toggleAudioRecording();
+    }
+    if (e.altKey && (e.key === "h" || e.key === "H")) {
+      e.preventDefault();
+      const widget = document.getElementById("skillups-ai-widget");
+      if (widget) {
+        widget.style.display = widget.style.display === "none" ? "flex" : "none";
+      }
     }
   });
 

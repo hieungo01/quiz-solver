@@ -1,6 +1,5 @@
-# Skillups AI Auto-Solver (Chrome Extension MV3)
-
-Extension hỗ trợ tự động nhận diện và gợi ý/chọn đáp án bài thi Skillups bằng mô hình **Google Gemini** (Gemini 3.8 Flash / Gemini 3.0 Flash / Gemini 2.0 Flash).
+# 🔮 AncestralWhisper — Tổ Tiên Mách Bảo (Chrome Extension MV3)
+> *"Tai nghe mắt thấy, mách chuẩn từng câu - Trợ lý thi cử Multimodal bằng Google Gemini AI"*
 
 ## 🚀 Hướng dẫn cài đặt vào trình duyệt (Chrome/Edge/Brave)
 
@@ -38,7 +37,18 @@ Extension hỗ trợ tự động nhận diện và gợi ý/chọn đáp án b�
 * **Bước 3 (Sang bài mới):**
   * Nhấn biểu tượng dấu **✕** trên badge ngữ cảnh (hoặc chỉ cần bấm `Alt + L` thu bài nghe mới), ngữ cảnh cũ sẽ được tự động làm mới!
 
+## 🌐 Khả năng tương thích nền tảng (Universal Platform Support)
+Extension được thiết kế theo mô hình **Hybrid Adaptor**, hoạt động trơn tru trên:
+* **Skillups Platform** (Được tối ưu hóa nhận diện chuyên sâu)
+* **Google Forms & Microsoft Forms**
+* **Moodle, Canvas LMS, Blackboard** (Hệ thống thi của hầu hết các trường Đại học)
+* **Quizizz, Kahoot, Azota, Subre**
+* **Coursera, Udemy, LinkedIn Learning**
+* Bất kỳ trang web trắc nghiệm hoặc bài thi nào trên Internet!
+
 ---
 
-## 🛠️ Tùy biến Selector cho Skillups
-Nếu cấu hình DOM của bài thi Skillups có class đặc thù, bạn có thể bổ sung selector vào file `content/content.js` tại mảng `questionSelectors` và `optionSelectors`.
+## ⌨️ Bảng phím tắt điều khiển siêu tốc
+* **`Alt + S`**: Chụp màn hình giải câu hỏi (Bài đọc, code, ảnh, sơ đồ - Tự động kèm ngữ cảnh nghe nếu có).
+* **`Alt + L`**: Bật / Tắt thu âm giải bài **Nghe (Listening)**.
+* **`Alt + H`**: Ẩn / Hiện widget điều khiển (cho đỡ vướng khi lướt web bình thường).
