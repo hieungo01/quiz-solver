@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Skillups AI Auto-Solver",
+  "name": "AncestralWhisper - Tổ Tiên Mách Bảo",
   "version": "1.0.0",
-  "description": "AI-powered semi-automatic quiz solver for Skillups using Google Gemini API.",
+  "description": "Tai nghe mắt thấy, mách chuẩn từng câu - Trợ lý giải đề thi multimodal bằng AI.",
   "permissions": [
     "storage",
     "activeTab",
@@ -19,7 +19,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Skillups AI Settings"
+    "default_title": "AncestralWhisper Settings"
   },
   "background": {
     "service_worker": "background/service-worker.js"
