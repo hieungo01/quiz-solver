@@ -6,8 +6,7 @@
 1. Mở trình duyệt và truy cập: `chrome://extensions/`
 2. Bật công tắc **Developer mode** (Chế độ dành cho nhà phát triển) ở góc trên bên phải.
 3. Bấm vào nút **Load unpacked** (Tải tiện ích đã giải nén).
-4. Chọn thư mục:
-   `c:\Users\Hieunm\.gemini\antigravity-ide\scratch\resume-latex\skillups-ai-solver`
+4. Chọn thư mục chứa mã nguồn extension (thư mục `skillups-ai-solver` hoặc thư mục dự án bạn đã tải về máy).
 
 ---
 
