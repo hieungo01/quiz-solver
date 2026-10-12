@@ -1,0 +1,150 @@
+/* Content Script CSS: Floating Assistant & Answer Highlights */
+
+/* Khung widget nổi ở góc màn hình */
+#skillups-ai-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #3b82f6;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  width: 320px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+#skillups-ai-widget.collapsed {
+  width: auto;
+  border-radius: 50px;
+}
+
+#skillups-ai-widget .widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #1e293b;
+  cursor: pointer;
+  user-select: none;
+}
+
+#skillups-ai-widget .widget-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#skillups-ai-widget .widget-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#skillups-ai-widget .status-badge {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+#skillups-ai-widget .explanation-box {
+  background: #1e293b;
+  border-left: 3px solid #3b82f6;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #cbd5e1;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+#skillups-ai-widget .action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+#skillups-ai-widget button.ai-btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#skillups-ai-widget button.btn-solve {
+  background: #2563eb;
+  color: #fff;
+}
+
+#skillups-ai-widget button.btn-solve:hover {
+  background: #1d4ed8;
+}
+
+#skillups-ai-widget button.btn-audio {
+  background: #475569;
+  color: #fff;
+}
+
+#skillups-ai-widget button.btn-audio:hover {
+  background: #334155;
+}
+
+#skillups-ai-widget button.btn-audio.recording {
+  background: #dc2626 !important;
+  color: #fff !important;
+  animation: pulseRecording 1s infinite alternate;
+}
+
+@keyframes pulseRecording {
+  from { transform: scale(1); box-shadow: 0 0 0 rgba(220, 38, 38, 0.4); }
+  to { transform: scale(1.05); box-shadow: 0 0 10px rgba(220, 38, 38, 0.8); }
+}
+
+#skillups-ai-widget button.btn-apply {
+  background: #10b981;
+  color: #fff;
+}
+
+#skillups-ai-widget button.btn-apply:hover {
+  background: #059669;
+}
+
+#skillups-ai-widget button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Stealth Marker: Tinh tế, không viền, không đổi màu nền */
+.skillups-ai-highlighted-answer {
+  position: relative !important;
+}
+
+.skillups-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 900;
+  margin-left: 8px;
+  user-select: none;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+  vertical-align: middle;
+}
+
+.skillups-ai-badge:hover {
+  opacity: 1;
+}

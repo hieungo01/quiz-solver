@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skillups AI Solver</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo-area">
+        <span class="icon">⚡</span>
+        <h2>Skillups AI</h2>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="extensionEnabled" checked>
+        <span class="slider"></span>
+      </label>
+    </header>
+
+    <div class="section">
+      <label for="apiKey">Gemini API Key</label>
+      <div class="input-group">
+        <input type="password" id="apiKey" placeholder="AIzaSy...">
+        <button id="toggleKeyVisibility" type="button" title="Show/Hide">👁️</button>
+      </div>
+      <p class="hint">Lấy key miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a></p>
+    </div>
+
+    <div class="section">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label for="modelSelect">Gemini Model</label>
+        <button id="refreshModelsBtn" type="button" style="background:none; border:none; color:#818cf8; font-size:11px; cursor:pointer;" title="Lấy danh sách model từ tài khoản">🔄 Tải danh sách model</button>
+      </div>
+      <select id="modelSelect">
+        <option value="auto" selected>✨ Tự động chọn (Auto - Chống quá tải)</option>
+        <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
+        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <label>Chế độ thao tác</label>
+      <div class="radio-group">
+        <label>
+          <input type="radio" name="mode" value="semi-auto" checked>
+          <span>Semi-Auto (Gợi ý + User bấm xác nhận)</span>
+        </label>
+        <label>
+          <input type="radio" name="mode" value="auto">
+          <span>Auto-Click (Tự động click đáp án ngay)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section footer-actions">
+      <button id="saveBtn" class="btn primary">Lưu cấu hình</button>
+      <button id="testBtn" class="btn secondary">Kiểm tra kết nối</button>
+    </div>
+
+    <div id="statusMessage" class="status-msg"></div>
+
+    <div class="shortcuts-info">
+      <div>💡 <b>Alt + S</b>: Chụp màn hình giải trắc nghiệm/bài đọc</div>
+      <div>🎧 <b>Alt + L</b>: Bật/Tắt thu âm bài nghe <b>Listening</b> (Mặc định TẮT)</div>
+    </div>
+  </div>
+
+  <!-- Modal thông báo kết nối thành công -->
+  <div id="successModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-icon">🎉</div>
+      <h3>Kết Nối Thành Công!</h3>
+      <p id="modalModelText">Model đang hoạt động: <b>gemini-3.8-flash</b></p>
+      <div class="modal-badge">Sẵn sàng giải bài trên Skillups</div>
+      <button id="closeModalBtn" class="btn primary" style="width:100%; margin-top:12px;">Bắt đầu sử dụng</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
