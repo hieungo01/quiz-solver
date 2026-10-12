@@ -1,12 +1,27 @@
 # 🔮 AncestralWhisper — Tổ Tiên Mách Bảo (Chrome Extension MV3)
 > *"Tai nghe mắt thấy, mách chuẩn từng câu - Trợ lý thi cử Multimodal bằng Google Gemini AI"*
 
+## ⚡ Cài đặt nhanh bằng 1 lệnh (Auto Setup Script)
+
+Dự án có sẵn script tự động kiểm tra hệ điều hành, tạo file `.env`, hỗ trợ nhập API Key và tự copy đường dẫn vào Clipboard:
+
+* **Trên macOS / Linux / Git Bash:**
+  ```bash
+  ./setup.sh
+  ```
+  *(hoặc `bash setup.sh`)*
+
+* **Trên Windows:**
+  Nhấp đúp chuột vào file **`setup.bat`** (hoặc mở Command Prompt / PowerShell chạy `.\setup.bat`).
+
+---
+
 ## 🚀 Hướng dẫn cài đặt vào trình duyệt (Chrome/Edge/Brave)
 
 1. Mở trình duyệt và truy cập: `chrome://extensions/`
 2. Bật công tắc **Developer mode** (Chế độ dành cho nhà phát triển) ở góc trên bên phải.
 3. Bấm vào nút **Load unpacked** (Tải tiện ích đã giải nén).
-4. Chọn thư mục chứa mã nguồn extension (thư mục `skillups-ai-solver` hoặc thư mục dự án bạn đã tải về máy).
+4. Dán đường dẫn thư mục đã được tự động copy vào Clipboard (hoặc chọn thư mục `skillups-ai-solver`).
 
 ---
 
