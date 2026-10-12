@@ -6,8 +6,57 @@ const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models
 // Cache danh sách models khả dụng trong phiên làm việc
 let cachedAvailableModels = [];
 
+/**
+ * Đọc cấu hình từ file .env trong thư mục extension
+ */
+async function loadEnvConfig() {
+  try {
+    const res = await fetch(chrome.runtime.getURL(".env"));
+    if (!res.ok) return {};
+    const text = await res.text();
+    const config = {};
+    const lines = text.split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx !== -1) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        let val = trimmed.slice(eqIdx + 1).trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        config[key] = val;
+      }
+    }
+    return config;
+  } catch (e) {
+    return {};
+  }
+}
+
+/**
+ * Lấy Gemini API Key ưu tiên: Tham số truyền vào -> Storage -> File .env
+ */
+async function getEffectiveApiKey(providedKey = "") {
+  if (providedKey && providedKey.trim()) return providedKey.trim();
+  const storage = await chrome.storage.local.get({ geminiApiKey: "" });
+  if (storage.geminiApiKey && storage.geminiApiKey.trim()) {
+    return storage.geminiApiKey.trim();
+  }
+  const env = await loadEnvConfig();
+  return env.GEMINI_API_KEY ? env.GEMINI_API_KEY.trim() : "";
+}
+
 // Lắng nghe messages từ Popup hoặc Content Script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "GET_ENV_CONFIG") {
+    loadEnvConfig()
+      .then(env => sendResponse({ success: true, env }))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
+  }
+
   if (request.action === "TEST_CONNECTION") {
     handleTestConnection(request.apiKey, request.model)
       .then(res => sendResponse(res))
@@ -16,7 +65,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === "LIST_MODELS") {
-    fetchAvailableModels(request.apiKey)
+    getEffectiveApiKey(request.apiKey)
+      .then(key => fetchAvailableModels(key))
       .then(res => sendResponse(res))
       .catch(err => sendResponse({ success: false, error: err.message }));
     return true;
@@ -132,12 +182,17 @@ async function getCandidateModels(apiKey, preferredModel = "gemini-3.8-flash") {
  * Kiểm tra kết nối tới Gemini API (Tự động tìm model chạy tốt nhất)
  */
 async function handleTestConnection(apiKey, model = "auto") {
-  const candidates = await getCandidateModels(apiKey, model);
+  const effectiveKey = await getEffectiveApiKey(apiKey);
+  if (!effectiveKey) {
+    throw new Error("Chưa cấu hình API Key trong Popup hoặc file .env");
+  }
+
+  const candidates = await getCandidateModels(effectiveKey, model);
   let lastError = null;
 
   for (const currentModel of candidates) {
     try {
-      const url = `${GEMINI_API_BASE}/${currentModel}:generateContent?key=${apiKey}`;
+      const url = `${GEMINI_API_BASE}/${currentModel}:generateContent?key=${effectiveKey}`;
       const requestBody = {
         contents: [{ parts: [{ text: "Ping" }] }]
       };
@@ -193,9 +248,9 @@ async function handleCaptureAndSolve(windowId, audioContext = "") {
     return { success: false, error: "Extension đang bị tắt trong cài đặt." };
   }
 
-  const apiKey = config.geminiApiKey;
+  const apiKey = await getEffectiveApiKey(config.geminiApiKey);
   if (!apiKey) {
-    return { success: false, error: "Chưa cấu hình Gemini API Key trong Popup." };
+    return { success: false, error: "Chưa cấu hình Gemini API Key trong Popup hoặc file .env." };
   }
 
   // 1. Chụp ảnh màn hình viewport hiện tại bằng chrome API
@@ -233,10 +288,10 @@ Nhiệm vụ của bạn:
 `.trim();
 
   if (config.sourceMode && config.sourceContent) {
-    systemInstruction += `\n\nCHẾ ĐỘ NOTEBOOKLM (SOURCE-GROUNDED MODE):
-- Bạn được cung cấp một TÀI LIỆU NGUỒN GỐC (Knowledge Source: ${config.sourceName || "Tài liệu ôn tập"}).
-- BẮT BUỘC bạn phải tìm kiếm và đối chiếu câu hỏi/đáp án dựa trên nội dung TÀI LIỆU NGUỒN này.
-- Trong kết quả trả về, bạn PHẢI trích dẫn câu văn/đoạn trích chính xác từ tài liệu làm bằng chứng vào trường "source_citation".`;
+    systemInstruction += `\n\nCHẾ ĐỘ NOTEBOOKLM (MULTI-SOURCE GROUNDED MODE):
+- Bạn được cung cấp các TÀI LIỆU NGUỒN GỐC sau (${config.sourceName || "Tài liệu ôn tập"}).
+- BẮT BUỘC bạn phải tìm kiếm và đối chiếu câu hỏi/đáp án dựa trên nội dung các TÀI LIỆU NGUỒN này.
+- Trong kết quả trả về, bạn PHẢI trích dẫn câu văn/đoạn trích chính xác từ tài liệu làm bằng chứng vào trường "source_citation" theo định dạng: "[Tên_file]: Trích dẫn bằng chứng...".`;
   }
 
   if (audioContext) {
@@ -432,9 +487,9 @@ async function callGeminiMultimodalAudioAndVision(base64Image, base64Audio) {
     enabled: true
   });
 
-  const apiKey = config.geminiApiKey;
+  const apiKey = await getEffectiveApiKey(config.geminiApiKey);
   if (!apiKey) {
-    throw new Error("Chưa cấu hình Gemini API Key.");
+    throw new Error("Chưa cấu hình Gemini API Key trong Popup hoặc file .env.");
   }
 
   const systemInstruction = `

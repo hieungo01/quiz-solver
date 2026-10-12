@@ -1,0 +1,8 @@
+# Secrets & Environment variables
+.env
+*.local
+
+# Node & package files
+node_modules/
+.DS_Store
+Thumbs.db

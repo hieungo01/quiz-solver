@@ -10,8 +10,20 @@
 
 ---
 
-## ⚙️ Cấu hình API Key
-1. Bấm vào icon Extension **Skillups AI** trên thanh công cụ của trình duyệt.
+## ⚙️ Cấu hình API Key (2 Cách linh hoạt)
+
+### Cách 1: Sử dụng file `.env` (Khuyên dùng - Không lo mất key khi reset trình duyệt)
+1. Trong thư mục gốc của extension, mở file `.env` (hoặc nhân bản từ `.env.example`).
+2. Điền API Key của bạn vào dòng `GEMINI_API_KEY`:
+   ```env
+   GEMINI_API_KEY=AIzaSyD...
+   GEMINI_MODEL=auto
+   DEFAULT_MODE=semi-auto
+   ```
+3. Lưu file lại. Extension sẽ **tự động đọc và ưu tiên sử dụng key từ `.env`** mà bạn không cần phải dán tay trên giao diện!
+
+### Cách 2: Nhập trực tiếp trên giao diện Extension Popup
+1. Bấm vào icon Extension **AncestralWhisper** trên thanh công cụ của trình duyệt.
 2. Dán **Gemini API Key** của bạn (lấy miễn phí tại [Google AI Studio](https://aistudio.google.com/apikey)).
 3. Bấm **Lưu cấu hình** -> Bấm **Kiểm tra kết nối** để xác nhận API hoạt động bình thường.
 
@@ -36,13 +48,15 @@
 * **Bước 3 (Sang bài mới):**
   * Nhấn biểu tượng dấu **✕** trên badge ngữ cảnh (hoặc chỉ cần bấm `Alt + L` thu bài nghe mới), ngữ cảnh cũ sẽ được tự động làm mới!
 
-### 3. Chế độ NotebookLM (Source-Grounded Mode - Tìm chính xác từ tài liệu ôn tập):
-* Mở Popup extension, tại mục **📚 Nguồn Tài Liệu (NotebookLM Mode)**:
-  * Bấm **📁 Tải file tài liệu** và chọn file đề cương, slide, ngân hàng câu hỏi (`.txt`, `.md`, `.pdf`, `.json`).
-  * Bật công tắc **Bật nguồn tài liệu**.
+### 3. Chế độ NotebookLM Đa Nguồn (Multi-Source Grounded Mode):
+* Mở Popup extension, tại mục **📚 Kho Tài Liệu (Đa Nguồn NotebookLM)**:
+  * Bấm **📁 + Thêm file tài liệu** và chọn **nhiều file cùng một lúc** (giữ Ctrl hoặc Shift để chọn đồng thời nhiều file đề cương, slide, ngân hàng câu hỏi `.txt`, `.md`, `.json`, `.pdf`).
+  * Hệ thống sử dụng cơ chế xử lý song song (`Promise.all`) đọc và tổng hợp đồng thời tất cả các tài liệu ngay lập tức.
+  * Hiển thị danh sách từng file đã nạp, dung lượng, nút xóa riêng lẻ (✕) và nút xóa toàn bộ.
+  * Popup hiển thị bảng thông báo thống kê tổng số file, dung lượng và số từ đã nạp thành công.
 * Khi bạn làm bài thi (bấm `Alt + S` hoặc `Alt + L`):
-  * Gemini sẽ **chỉ tìm kiếm và đối chiếu đáp án trong tài liệu bạn đã tải lên** (Zero Hallucination).
-  * Widget sẽ hiển thị: **Đáp án đúng** + **Trích dẫn câu văn nguyên văn làm bằng chứng** từ chính tài liệu của bạn!
+  * Gemini sẽ **đối chiếu câu hỏi và tìm đáp án trong toàn bộ kho tài liệu đã nạp** (Zero Hallucination).
+  * Widget sẽ hiển thị: **Đáp án đúng** + **Trích dẫn bằng chứng cụ thể kèm tên file** (ví dụ: `[de_cuong.md]: Trích dẫn...`).
 
 ---
 
@@ -57,7 +71,11 @@ Extension được thiết kế theo mô hình **Hybrid Adaptor**, hoạt độn
 
 ---
 
-## ⌨️ Bảng phím tắt điều khiển siêu tốc
-* **`Alt + S`**: Chụp màn hình giải câu hỏi (Bài đọc, code, ảnh, sơ đồ - Tự động kèm ngữ cảnh nghe nếu có).
-* **`Alt + L`**: Bật / Tắt thu âm giải bài **Nghe (Listening)**.
-* **`Alt + H`**: Ẩn / Hiện widget điều khiển (cho đỡ vướng khi lướt web bình thường).
+## ⌨️ Bảng phím tắt điều khiển siêu tốc (Windows & macOS)
+* **`Alt + S`** *(MacBook: **`Option ⌥ + S`**)*: Chụp màn hình giải câu hỏi (Bài đọc, code, ảnh, sơ đồ - Tự động kèm ngữ cảnh nghe nếu có).
+* **`Alt + L`** *(MacBook: **`Option ⌥ + L`**)*: Bật / Tắt thu âm giải bài **Nghe (Listening)**.
+* **`Alt + H`** *(MacBook: **`Option ⌥ + H`**)*: Ẩn / Hiện widget điều khiển.
+
+> 🍎 **Mẹo cho người dùng MacBook:**
+> - Phím `Alt` tương đương với phím **`Option` (`⌥`)** trên bàn phím Mac.
+> - Để xem và chỉnh sửa file ẩn `.env` trong Finder của macOS, bấm tổ hợp phím **`Cmd + Shift + .`** (Command + Shift + Dấu chấm).

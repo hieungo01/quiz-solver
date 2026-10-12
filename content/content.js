@@ -45,6 +45,9 @@
       </div>
       <div class="widget-body" id="widget-content">
         <div class="status-badge" id="ai-status">Sẵn sàng (Phím tắt: Alt + S)</div>
+        <div id="source-doc-badge" style="display:none; background:#064e3b; border:1px solid #10b981; border-radius:4px; padding:4px 8px; font-size:11px; color:#a7f3d0; margin-bottom:4px;">
+          📚 <b>Tài liệu gốc:</b> <span id="source-doc-name">Chưa có</span>
+        </div>
         <div id="audio-context-badge" style="display:none; background:#1e1b4b; border:1px solid #6366f1; border-radius:4px; padding:4px 8px; font-size:11px; color:#c7d2fe; display:flex; justify-content:space-between; align-items:center;">
           <span>🎧 <b>Ngữ cảnh nghe:</b> <span id="audio-context-snippet">Đã lưu</span></span>
           <span id="btn-clear-audio-context" style="cursor:pointer; color:#ef4444; font-weight:bold; margin-left:6px;" title="Xóa ngữ cảnh audio để làm bài mới">✕</span>
@@ -77,6 +80,33 @@
     document.getElementById("btn-clear-audio-context").addEventListener("click", (e) => {
       e.stopPropagation();
       clearAudioContext();
+    });
+
+    // Cập nhật trạng thái hiển thị tài liệu nguồn trên widget
+    const syncSourceBadge = () => {
+      chrome.storage.local.get({ sourceMode: false, sourceName: "", sourceCount: 0, sourceSize: 0 }, (items) => {
+        const badge = document.getElementById("source-doc-badge");
+        const nameEl = document.getElementById("source-doc-name");
+        if (badge && nameEl) {
+          if (items.sourceMode && items.sourceName) {
+            const label = items.sourceCount > 1 
+              ? `📚 ${items.sourceCount} files (${items.sourceSize} KB)` 
+              : `📚 ${items.sourceName}`;
+            nameEl.textContent = label.length > 28 ? label.slice(0, 26) + "..." : label;
+            badge.title = `Kho tài liệu: ${items.sourceName} (${items.sourceSize} KB)`;
+            badge.style.display = "block";
+          } else {
+            badge.style.display = "none";
+          }
+        }
+      });
+    };
+
+    syncSourceBadge();
+    chrome.storage.onChanged.addListener((changes) => {
+      if (changes.sourceMode || changes.sourceName) {
+        syncSourceBadge();
+      }
     });
   }
 
@@ -487,20 +517,23 @@
     }
   }
 
-  // 6. Phím tắt: 
-  // Alt + S: Chụp màn hình giải bài đọc/trắc nghiệm
-  // Alt + L: Bật/Tắt thu âm giải bài Listening (Mặc định tắt)
-  // Alt + H: Ẩn / Hiện Widget nhanh (dành cho khi lướt web thông thường)
+  // 6. Phím tắt (Hỗ trợ cả Windows Alt và MacBook Option ⌥): 
+  // Alt + S (MacBook: Option + S): Chụp màn hình giải bài đọc/trắc nghiệm
+  // Alt + L (MacBook: Option + L): Bật/Tắt thu âm giải bài Listening (Mặc định tắt)
+  // Alt + H (MacBook: Option + H): Ẩn / Hiện Widget nhanh
   window.addEventListener("keydown", (e) => {
-    if (e.altKey && (e.key === "s" || e.key === "S")) {
+    // Trên macOS, phím Option tương ứng với e.altKey
+    const isAltOrOption = e.altKey;
+    if (!isAltOrOption) return;
+
+    // Dùng e.code để tránh lỗi macOS biến ký tự thành 'ß', '¬', '˙' khi bấm Option
+    if (e.code === "KeyS" || e.key === "s" || e.key === "S" || e.key === "ß") {
       e.preventDefault();
       captureAndSolveCurrentScreen();
-    }
-    if (e.altKey && (e.key === "l" || e.key === "L")) {
+    } else if (e.code === "KeyL" || e.key === "l" || e.key === "L" || e.key === "¬") {
       e.preventDefault();
       toggleAudioRecording();
-    }
-    if (e.altKey && (e.key === "h" || e.key === "H")) {
+    } else if (e.code === "KeyH" || e.key === "h" || e.key === "H" || e.key === "˙") {
       e.preventDefault();
       const widget = document.getElementById("skillups-ai-widget");
       if (widget) {

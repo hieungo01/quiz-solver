@@ -5,11 +5,13 @@
   "description": "Tai nghe mắt thấy, mách chuẩn từng câu - Trợ lý giải đề thi multimodal bằng AI.",
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "activeTab",
     "tabs",
     "tabCapture",
     "offscreen",
     "scripting",
+    "notifications",
     "<all_urls>"
   ],
   "host_permissions": [
