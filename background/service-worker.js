@@ -51,6 +51,11 @@ async function getEffectiveApiKey(providedKey = "") {
 // Lắng nghe messages từ Popup hoặc Content Script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "GET_ENV_CONFIG") {
+    // Chỉ cho phép truy xuất biến môi trường từ ngữ cảnh nội bộ của Extension (Popup / Offscreen), từ chối Content Scripts từ web
+    if (sender.tab) {
+      sendResponse({ success: false, error: "Access denied: Content scripts cannot read extension environment secrets." });
+      return true;
+    }
     loadEnvConfig()
       .then(env => sendResponse({ success: true, env }))
       .catch(err => sendResponse({ success: false, error: err.message }));
@@ -99,6 +104,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch(err => sendResponse({ success: false, error: err.message }));
     return true;
   }
+
+  if (request.action === "GENERATE_SPEAKING_SCRIPT") {
+    handleGenerateSpeakingScript(sender.tab?.windowId, request.speakingLevel, request.promptContext)
+      .then(res => sendResponse(res))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
+  }
 });
 
 /**
@@ -106,8 +118,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 async function fetchAvailableModels(apiKey) {
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-    const res = await fetch(url);
+    const url = "https://generativelanguage.googleapis.com/v1beta/models";
+    const res = await fetch(url, {
+      headers: {
+        "x-goog-api-key": apiKey
+      }
+    });
     const data = await res.json();
 
     if (!res.ok) {
@@ -192,14 +208,17 @@ async function handleTestConnection(apiKey, model = "auto") {
 
   for (const currentModel of candidates) {
     try {
-      const url = `${GEMINI_API_BASE}/${currentModel}:generateContent?key=${effectiveKey}`;
+      const url = `${GEMINI_API_BASE}/${currentModel}:generateContent`;
       const requestBody = {
         contents: [{ parts: [{ text: "Ping" }] }]
       };
 
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": effectiveKey
+        },
         body: JSON.stringify(requestBody)
       });
 
@@ -357,10 +376,13 @@ Quy tắc:
 
   for (const currentModel of candidates) {
     try {
-      const targetUrl = `${GEMINI_API_BASE}/${currentModel}:generateContent?key=${apiKey}`;
+      const targetUrl = `${GEMINI_API_BASE}/${currentModel}:generateContent`;
       const response = await fetch(targetUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
         body: JSON.stringify(requestBody)
       });
 
@@ -555,10 +577,13 @@ BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON SCHEMA:
 
   for (const currentModel of candidates) {
     try {
-      const targetUrl = `${GEMINI_API_BASE}/${currentModel}:generateContent?key=${apiKey}`;
+      const targetUrl = `${GEMINI_API_BASE}/${currentModel}:generateContent`;
       const response = await fetch(targetUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
         body: JSON.stringify(requestBody)
       });
 
@@ -590,4 +615,208 @@ BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON SCHEMA:
 
   throw new Error(lastError || "Tất cả các model đều đang bận. Vui lòng thử lại sau.");
 }
+
+/**
+ * TỰ ĐỘNG NHẬN DIỆN ĐỀ BÀI NÓI & SOẠN KỊCH BẢN NÓI THEO LEVEL (A2, B1-B2, C1-C2)
+ */
+async function handleGenerateSpeakingScript(windowId, preferredLevel = "b1-b2", promptContext = "") {
+  const config = await chrome.storage.local.get({
+    geminiApiKey: "",
+    geminiModel: "auto",
+    enabled: true,
+    speakingLevel: "b1-b2",
+    sourceMode: false,
+    sourceContent: "",
+    sourceName: ""
+  });
+
+  if (!config.enabled) {
+    return { success: false, error: "Extension đang bị tắt trong cài đặt." };
+  }
+
+  const apiKey = await getEffectiveApiKey(config.geminiApiKey);
+  if (!apiKey) {
+    return { success: false, error: "Chưa cấu hình Gemini API Key trong Popup hoặc file .env." };
+  }
+
+  const activeLevel = (preferredLevel || config.speakingLevel || "b1-b2").toLowerCase();
+
+  // 1. Chụp màn hình đề thi nói viewport hiện tại
+  let screenshotUrl;
+  try {
+    let targetWindowId = windowId;
+    if (!targetWindowId) {
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      targetWindowId = activeTab?.windowId || null;
+    }
+
+    screenshotUrl = await chrome.tabs.captureVisibleTab(targetWindowId, {
+      format: "jpeg",
+      quality: 85
+    });
+  } catch (err) {
+    throw new Error(`Không thể chụp màn hình đề thi nói: ${err.message}.`);
+  }
+
+  if (!screenshotUrl) {
+    throw new Error("Chụp ảnh màn hình đề thi nói trả về rỗng.");
+  }
+
+  const base64Data = screenshotUrl.replace(/^data:image\/(jpeg|png);base64,/, "");
+
+  // 2. Định nghĩa chi tiết tiêu chuẩn văn phong và ngữ pháp theo từng Level
+  let levelGuideline = "";
+  let levelLabel = "";
+  if (activeLevel === "a2") {
+    levelLabel = "🌱 A2 Cơ Bản (Band 4.0 - 5.0)";
+    levelGuideline = `
+TRÌNH ĐỘ YÊU CẦU: A2 / Elementary (Beginner - Band 4.0 - 5.0)
+- Từ vựng: Dùng từ vựng đơn giản, thông dụng nhất trong giao tiếp hàng ngày. KHÔNG dùng từ ngữ chuyên sâu, từ cổ hoặc idioms phức tạp.
+- Ngữ pháp: Câu đơn và câu ghép cơ bản (sử dụng liên từ đơn giản: and, but, because, so). Tránh các cấu trúc đảo ngữ, mệnh đề quan hệ lồng ghép.
+- Độ dài & Thời lượng: Khoảng 70 - 95 từ, tương đương 45 - 60 giây nói chậm rãi, rõ ràng.
+- Phong cách: Tự nhiên, ngắn gọn, dễ nhớ, dễ phát âm, thí sinh nhìn vào có thể đọc trôi chảy ngay mà không bị vấp.`;
+  } else if (activeLevel === "c1-c2") {
+    levelLabel = "🔥 C1-C2 Nâng Cao (Band 7.5 - 8.5+)";
+    levelGuideline = `
+TRÌNH ĐỘ YÊU CẦU: C1-C2 / Advanced (Master - Band 7.5 - 8.5+)
+- Từ vựng: Từ vựng học thuật, biểu cảm tinh tế (lexical precision), thành ngữ tự nhiên (idioms, phrasal verbs, collocations bản xứ).
+- Ngữ pháp: Đa dạng các cấu trúc phức tạp: Đảo ngữ (Inversion), câu chẻ (Cleft sentences), câu điều kiện hỗn hợp, phân từ rút gọn (Participial clauses), bị động khách quan.
+- Độ dài & Thời lượng: Khoảng 140 - 180 từ, tương đương 75 - 100 giây nói sâu sắc, lôi cuốn.
+- Lập luận: Sâu sắc, đa chiều, có phản đề hoặc góc nhìn độc đáo, phong thái nói tự tin của người bản ngữ.`;
+  } else {
+    // b1-b2
+    levelLabel = "⚡ B1-B2 Trung Cấp (Band 5.5 - 6.5)";
+    levelGuideline = `
+TRÌNH ĐỘ YÊU CẦU: B1-B2 / Intermediate (Band 5.5 - 6.5)
+- Từ vựng: Từ vựng phong phú, sử dụng đúng ngữ cảnh, có một số collocations tự nhiên và từ nối tốt (Furthermore, In my view, On the contrary, To be honest).
+- Ngữ pháp: Kết hợp nhịp nhàng giữa câu đơn, câu ghép và câu phức (mệnh đề quan hệ, mệnh đề trạng ngữ chỉ nguyên nhân/kết quả/tương phản).
+- Độ dài & Thời lượng: Khoảng 105 - 140 từ, tương đương 60 - 80 giây nói mạch lạc.
+- Bố cục: Mở bài trực tiếp và thu hút -> 2 ý triển khai có dẫn chứng hoặc trải nghiệm cá nhân cụ thể -> Kết luận ngắn gọn.`;
+  }
+
+  let systemInstruction = `
+Bạn là Giám khảo & Huấn luyện viên chuyên gia Luyện thi Speaking (IELTS, TOEIC Speaking, VSTEP, TOEFL, Duolingo, Skillups).
+Nhiệm vụ của bạn:
+1. Quan sát kỹ ảnh chụp màn hình hiển thị câu hỏi/đề bài bài nói (Speaking Prompt). Đề bài có thể là:
+   - Câu hỏi ngắn (Part 1 / Interview / Q&A)
+   - Thuyết trình theo chủ đề (Part 2 Cue Card / Monologue / Presentation)
+   - Thảo luận quan điểm chuyên sâu (Part 3 / Discussion / Debate)
+   - Miêu tả tranh ảnh (Picture Description)
+   - Đọc diễn cảm (Read Aloud) hoặc tình huống nhập vai (Role-play).
+2. Tự động trích xuất đề bài / câu hỏi chính xác.
+3. Soạn thảo một kịch bản nói (Speaking Script) HOÀN HẢO theo đúng trình độ được yêu cầu dưới đây:
+${levelGuideline}
+
+Quy tắc biên soạn kịch bản:
+- Kịch bản viết bằng tiếng Anh chuẩn văn nói (Spoken English), tự nhiên, mượt mà, không gượng gạo như văn viết.
+- Có thể dùng dấu gạch đứng " | " ở những chỗ ngắt hơi tự nhiên để người nói biết cách lấy hơi và ngắt nhịp đúng nhịp điệu (Intonation).
+- Kèm bản dịch tiếng Việt chuẩn xác, tự nhiên câu theo câu để người học hiểu trọn vẹn ý tứ.
+- Cung cấp dàn ý ngắn gọn (Outline) gồm các gạch đầu dòng ngắn để người nói có thể ứng biến nếu không muốn đọc thuộc lòng.
+- Trích xuất 4 - 6 từ vựng / Collocations ăn điểm theo đúng trình độ kèm phiên âm IPA và nghĩa tiếng Việt.
+- Đưa ra 1 mẹo phát âm / ngữ điệu cốt lõi cho bài này.
+`.trim();
+
+  if (config.sourceMode && config.sourceContent) {
+    systemInstruction += `\n\nCHẾ ĐỘ TÀI LIỆU NGUỒN: Ưu tiên áp dụng từ vựng, kiến thức hoặc ví dụ từ kho tài liệu ôn tập (${config.sourceName}) vào bài nói nếu chủ đề liên quan.`;
+  }
+
+  systemInstruction += `\n\nBẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON SCHEMA SAU (Không thêm văn bản nào ngoài JSON):
+{
+  "topic": "Đề tài / Câu hỏi bài nói trích xuất được từ ảnh",
+  "task_type": "Dạng bài (ví dụ: Q&A, Cue Card, Miêu tả tranh, Tranh luận, v.v.)",
+  "level": "${activeLevel}",
+  "level_label": "${levelLabel}",
+  "estimated_time": "~60 giây (115 từ)",
+  "word_count": 115,
+  "outline": [
+    "📌 Mở đầu: ...",
+    "💡 Ý 1: ... (Ví dụ: ...)",
+    "💡 Ý 2: ... (Ví dụ: ...)",
+    "🎯 Kết bài: ..."
+  ],
+  "script": "Toàn bộ bài nói bằng tiếng Anh, có ngắt nhịp | tự nhiên...",
+  "vietnamese_translation": "Bản dịch nghĩa tiếng Việt chi tiết song song...",
+  "key_vocabulary": [
+    {
+      "word": "từ hoặc collocation",
+      "phonetic": "/phiên âm/",
+      "meaning": "nghĩa tiếng Việt"
+    }
+  ],
+  "pronunciation_tips": "Mẹo nhấn trọng âm, nối âm hoặc ngữ điệu cho bài nói này."
+}`;
+
+  const parts = [
+    {
+      inlineData: {
+        mimeType: "image/jpeg",
+        data: base64Data
+      }
+    }
+  ];
+
+  let promptText = `Hãy quan sát ảnh chụp màn hình đề thi nói trên, nhận diện câu hỏi và soạn một kịch bản nói (Speaking Script) trình độ ${levelLabel} theo JSON schema.`;
+  if (promptContext) {
+    promptText += `\nGhi chú thêm từ người dùng: ${promptContext}`;
+  }
+  if (config.sourceMode && config.sourceContent) {
+    promptText = `[TÀI LIỆU ÔN TẬP GỐC]:\n"""\n${config.sourceContent.slice(0, 15000)}\n"""\n\n` + promptText;
+  }
+
+  parts.push({ text: promptText });
+
+  const requestBody = {
+    contents: [{ parts: parts }],
+    systemInstruction: { parts: [{ text: systemInstruction }] },
+    generationConfig: {
+      temperature: 0.3,
+      responseMimeType: "application/json"
+    }
+  };
+
+  const candidates = await getCandidateModels(apiKey, config.geminiModel);
+  let lastError = null;
+
+  for (const currentModel of candidates) {
+    try {
+      const targetUrl = `${GEMINI_API_BASE}/${currentModel}:generateContent`;
+      const response = await fetch(targetUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        const errMsg = data.error?.message || `HTTP ${response.status}`;
+        if (isOverloadedOrUnavailable(response.status, errMsg)) {
+          console.warn(`[Speaking Script] Model ${currentModel} quá tải: ${errMsg}. Thử model khác...`);
+          lastError = errMsg;
+          continue;
+        }
+        throw new Error(errMsg);
+      }
+
+      const rawAnswer = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawAnswer) continue;
+
+      try {
+        const parsed = JSON.parse(rawAnswer);
+        return { success: true, result: parsed, activeModel: currentModel };
+      } catch (err) {
+        const cleanJson = rawAnswer.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+        const parsed = JSON.parse(cleanJson);
+        return { success: true, result: parsed, activeModel: currentModel };
+      }
+    } catch (err) {
+      lastError = err.message;
+    }
+  }
+
+  throw new Error(lastError || "Tất cả các model đều đang bận. Vui lòng thử lại sau.");
+}
+
 

@@ -9,8 +9,8 @@
 <body>
   <div class="container">
     <header class="header">
-      <div class="logo-area">
-        <span class="icon">🔮</span>
+      <div class="logo-area" style="display:flex; align-items:center; gap:8px;">
+        <img src="../icons/icon32.png" alt="AncestralWhisper" style="width:26px; height:26px; border-radius:6px; box-shadow:0 0 8px rgba(96,165,250,0.6);">
         <h2>AncestralWhisper</h2>
       </div>
       <label class="switch">
@@ -59,6 +59,20 @@
       </div>
     </div>
 
+    <!-- Cấu hình Trình độ Speaking -->
+    <div class="section" style="background:rgba(124, 58, 237, 0.12); border:1px solid rgba(124, 58, 237, 0.4); border-radius:8px; padding:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label for="speakingLevelSelect" style="color:#c4b5fd; font-weight:700;">🗣️ Trình Độ Bài Nói (Speaking Level)</label>
+        <span style="font-size:10px; color:#a78bfa; font-weight:600;">Alt + K</span>
+      </div>
+      <select id="speakingLevelSelect" style="margin-top:6px; background:#1e1b4b; border-color:#6d28d9; color:#f5f3ff;">
+        <option value="b1-b2" selected>⚡ B1 - B2: Trung cấp (Tự nhiên, liên từ mượt, Band 5.5 - 6.5)</option>
+        <option value="a2">🌱 A2: Cơ bản (Câu ngắn, từ vựng dễ, ít vấp, Band 4.0 - 5.0)</option>
+        <option value="c1-c2">🔥 C1 - C2: Nâng cao (Học thuật, idioms, tư duy sâu, Band 7.5 - 8.5+)</option>
+      </select>
+      <p class="hint" style="color:#ddd6fe; margin-top:4px;">AI sẽ tự động nhận diện đề thi nói và soạn kịch bản theo đúng cấp độ bạn đã chọn.</p>
+    </div>
+
     <!-- NotebookLM Multi-Source Grounding -->
     <div class="section" style="background:#1e1b4b; border:1px solid #6366f1; border-radius:8px; padding:10px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -68,10 +82,10 @@
           <span class="slider"></span>
         </label>
       </div>
-      <p class="hint" style="color:#a5b4fc; margin-top:2px;">Chọn nhiều file cùng lúc (Slide, Đề cương, TXT, MD, JSON). AI sẽ đọc và tổng hợp đồng thời tất cả tài liệu.</p>
+      <p class="hint" style="color:#a5b4fc; margin-top:2px;">Chọn nhiều file văn bản cùng lúc (Slide text, Đề cương, TXT, MD, JSON). AI sẽ đọc và tổng hợp đồng thời tất cả tài liệu.</p>
       
       <div style="margin-top:8px; display:flex; gap:6px;">
-        <input type="file" id="sourceFileInput" accept=".txt,.md,.json,.pdf" multiple style="display:none;">
+        <input type="file" id="sourceFileInput" accept=".txt,.md,.json" multiple style="display:none;">
         <button id="uploadSourceBtn" type="button" class="btn secondary" style="font-size:11px; padding:6px 10px; flex:1;">📁 + Thêm file tài liệu</button>
         <button id="clearSourceBtn" type="button" class="btn secondary" style="font-size:11px; padding:6px 8px; display:none; color:#f87171;" title="Xóa toàn bộ tài liệu">🗑️ Xóa hết</button>
       </div>
@@ -91,6 +105,7 @@
     <div class="shortcuts-info">
       <div>💡 <b>Alt + S</b> <i>(Mac: Option ⌥ + S)</i>: Chụp màn hình giải bài</div>
       <div>🎧 <b>Alt + L</b> <i>(Mac: Option ⌥ + L)</i>: Bật/Tắt thu âm bài nghe <b>Listening</b></div>
+      <div>🗣️ <b>Alt + K</b> <i>(Mac: Option ⌥ + K)</i>: Gợi ý kịch bản bài nói <b>Speaking</b> theo level</div>
       <div>👁️ <b>Alt + H</b> <i>(Mac: Option ⌥ + H)</i>: Ẩn/Hiện widget điều khiển</div>
     </div>
   </div>

@@ -11,12 +11,10 @@
     "tabCapture",
     "offscreen",
     "scripting",
-    "notifications",
-    "<all_urls>"
+    "notifications"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*",
-    "<all_urls>",
     "*://*/*"
   ],
   "action": {
@@ -32,6 +30,12 @@
       "css": ["content/content.css"],
       "js": ["content/content.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["content/content.css"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

@@ -72,16 +72,9 @@ if [ -z "$CURRENT_KEY" ]; then
   INPUT_KEY=$(echo "$INPUT_KEY" | tr -d ' "')
 
   if [ -n "$INPUT_KEY" ]; then
-    # Ghi API Key vào .env
-    if grep -q '^GEMINI_API_KEY=' "$ENV_FILE"; then
-      if [ "$OS_TYPE" = "macOS" ]; then
-        sed -i '' "s|^GEMINI_API_KEY=.*|GEMINI_API_KEY=${INPUT_KEY}|" "$ENV_FILE"
-      else
-        sed -i "s|^GEMINI_API_KEY=.*|GEMINI_API_KEY=${INPUT_KEY}|" "$ENV_FILE"
-      fi
-    else
-      echo "GEMINI_API_KEY=${INPUT_KEY}" >> "$ENV_FILE"
-    fi
+    # Ghi API Key vào .env an toàn không bị lỗi ký tự đặc biệt
+    TMP_ENV="${ENV_FILE}.tmp"
+    awk -v key="$INPUT_KEY" 'BEGIN{FS=OFS="="} /^GEMINI_API_KEY=/{$2=key; found=1} {print} END{if(!found) print "GEMINI_API_KEY=" key}' "$ENV_FILE" > "$TMP_ENV" && mv "$TMP_ENV" "$ENV_FILE"
     echo -e "${GREEN}✅ Đã lưu Gemini API Key vào file .env thành công!${NC}"
   else
     echo -e "${YELLOW}⚠️  Bỏ qua nhập key. Bạn có thể mở file .env để điền bất cứ lúc nào.${NC}"
@@ -127,10 +120,12 @@ echo -e "\n${PURPLE}⌨️  PHÍM TẮT SỬ DỤNG:${NC}"
 if [ "$OS_TYPE" = "macOS" ]; then
   echo -e "   • ${BOLD}Option ⌥ + S${NC} : Chụp màn hình giải bài thi (Skillups & mọi web)"
   echo -e "   • ${BOLD}Option ⌥ + L${NC} : Bật/Tắt thu âm bài nghe Listening"
+  echo -e "   • ${BOLD}Option ⌥ + K${NC} : Gợi ý kịch bản bài nói Speaking theo level"
   echo -e "   • ${BOLD}Option ⌥ + H${NC} : Ẩn/Hiện widget điều khiển"
 else
   echo -e "   • ${BOLD}Alt + S${NC}      : Chụp màn hình giải bài thi (Skillups & mọi web)"
   echo -e "   • ${BOLD}Alt + L${NC}      : Bật/Tắt thu âm bài nghe Listening"
+  echo -e "   • ${BOLD}Alt + K${NC}      : Gợi ý kịch bản bài nói Speaking theo level"
   echo -e "   • ${BOLD}Alt + H${NC}      : Ẩn/Hiện widget điều khiển"
 fi
 

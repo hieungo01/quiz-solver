@@ -13,8 +13,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   const clearSourceBtn = document.getElementById("clearSourceBtn");
   const sourceFileInfo = document.getElementById("sourceFileInfo");
   const envKeyBadge = document.getElementById("envKeyBadge");
+  const speakingLevelSelect = document.getElementById("speakingLevelSelect");
 
   let envConfig = {};
+
+  // Hàm mã hóa an toàn các chuỗi hiển thị HTML để chống DOM XSS
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
   // Hàm đọc cấu hình file .env
   async function readEnvConfig() {
@@ -56,7 +68,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       sourceFiles: [],
       sourceName: "",
       sourceSize: 0,
-      sourceContent: ""
+      sourceContent: "",
+      speakingLevel: "b1-b2"
     },
     (items) => {
       // Ưu tiên: nếu storage rỗng nhưng .env có key thì lấy từ .env
@@ -85,6 +98,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       extensionEnabled.checked = items.enabled;
       sourceModeEnabled.checked = items.sourceMode;
+      if (speakingLevelSelect) {
+        speakingLevelSelect.value = items.speakingLevel || "b1-b2";
+      }
 
       const modeRadio = document.querySelector(`input[name="mode"][value="${items.mode}"]`);
       if (modeRadio) modeRadio.checked = true;
@@ -163,7 +179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const totalWords = updatedFiles.reduce((acc, f) => acc + (f.wordCount || Math.round(f.content.length / 5)), 0);
 
         if (docSuccessModal && modalDocText) {
-          const fileNamesList = newFiles.map(f => `• <b>${f.name}</b> (${f.sizeKb} KB)`).join("<br>");
+          const fileNamesList = newFiles.map(f => `• <b>${escapeHtml(f.name)}</b> (${f.sizeKb} KB)`).join("<br>");
           modalDocText.innerHTML = `
             Đã đọc thành công <b style="color:#34d399;">${newFiles.length} file mới</b>:<br>
             <div style="max-height:80px; overflow-y:auto; margin:6px 0; font-size:11px; background:rgba(0,0,0,0.2); padding:6px; border-radius:4px; text-align:left;">
@@ -270,13 +286,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         color: #e2e8f0;
       `;
 
+      const safeName = escapeHtml(file.name);
       itemEl.innerHTML = `
-        <div style="display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:210px;" title="${file.name}">
+        <div style="display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:210px;" title="${safeName}">
           <span>📄</span>
-          <span style="font-weight:600; color:#cbd5e1; overflow:hidden; text-overflow:ellipsis;">${file.name}</span>
+          <span style="font-weight:600; color:#cbd5e1; overflow:hidden; text-overflow:ellipsis;">${safeName}</span>
           <span style="font-size:10px; color:#94a3b8;">(${file.sizeKb} KB)</span>
         </div>
-        <button class="delete-file-btn" data-id="${file.id}" type="button" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:12px; font-weight:bold; padding:2px 4px;" title="Xóa tài liệu này">✕</button>
+        <button class="delete-file-btn" data-id="${escapeHtml(file.id)}" type="button" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:12px; font-weight:bold; padding:2px 4px;" title="Xóa tài liệu này">✕</button>
       `;
 
       // Nút xóa riêng lẻ từng file
@@ -317,27 +334,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Save settings (Không lưu API Key vào storage để bảo mật tuyệt đối)
+  // Save settings
   saveBtn.addEventListener("click", () => {
     const model = modelSelect.value;
     const mode = document.querySelector('input[name="mode"]:checked')?.value || "semi-auto";
     const enabled = extensionEnabled.checked;
     const sourceMode = sourceModeEnabled.checked;
+    const inputKey = apiKeyInput.value.trim();
 
-    // Xóa bỏ geminiApiKey khỏi storage (nếu có từ phiên bản cũ) để tránh lộ key
-    chrome.storage.local.remove("geminiApiKey");
+    const storagePayload = {
+      geminiModel: model,
+      mode: mode,
+      enabled: enabled,
+      sourceMode: sourceMode,
+      speakingLevel: speakingLevelSelect ? speakingLevelSelect.value : "b1-b2"
+    };
 
-    chrome.storage.local.set(
-      {
-        geminiModel: model,
-        mode: mode,
-        enabled: enabled,
-        sourceMode: sourceMode
-      },
-      () => {
-        showStatus("Đã lưu cài đặt! (API Key được bảo mật qua .env, không lưu vào bộ nhớ)", "success");
-      }
-    );
+    if (inputKey && inputKey !== envConfig.GEMINI_API_KEY) {
+      storagePayload.geminiApiKey = inputKey;
+    } else if (!inputKey) {
+      chrome.storage.local.remove("geminiApiKey");
+    }
+
+    chrome.storage.local.set(storagePayload, () => {
+      showStatus("Đã lưu cấu hình thành công!", "success");
+    });
   });
 
   // Tải danh sách model khả dụng từ chính tài khoản Google

@@ -1,27 +1,12 @@
 # 🔮 AncestralWhisper — Tổ Tiên Mách Bảo (Chrome Extension MV3)
 > *"Tai nghe mắt thấy, mách chuẩn từng câu - Trợ lý thi cử Multimodal bằng Google Gemini AI"*
 
-## ⚡ Cài đặt nhanh bằng 1 lệnh (Auto Setup Script)
-
-Dự án có sẵn script tự động kiểm tra hệ điều hành, tạo file `.env`, hỗ trợ nhập API Key và tự copy đường dẫn vào Clipboard:
-
-* **Trên macOS / Linux / Git Bash:**
-  ```bash
-  ./setup.sh
-  ```
-  *(hoặc `bash setup.sh`)*
-
-* **Trên Windows:**
-  Nhấp đúp chuột vào file **`setup.bat`** (hoặc mở Command Prompt / PowerShell chạy `.\setup.bat`).
-
----
-
 ## 🚀 Hướng dẫn cài đặt vào trình duyệt (Chrome/Edge/Brave)
 
 1. Mở trình duyệt và truy cập: `chrome://extensions/`
 2. Bật công tắc **Developer mode** (Chế độ dành cho nhà phát triển) ở góc trên bên phải.
 3. Bấm vào nút **Load unpacked** (Tải tiện ích đã giải nén).
-4. Dán đường dẫn thư mục đã được tự động copy vào Clipboard (hoặc chọn thư mục `skillups-ai-solver`).
+4. Chọn thư mục chứa mã nguồn extension (thư mục `skillups-ai-solver` hoặc thư mục dự án bạn đã tải về máy).
 
 ---
 
@@ -63,13 +48,29 @@ Dự án có sẵn script tự động kiểm tra hệ điều hành, tạo file
 * **Bước 3 (Sang bài mới):**
   * Nhấn biểu tượng dấu **✕** trên badge ngữ cảnh (hoặc chỉ cần bấm `Alt + L` thu bài nghe mới), ngữ cảnh cũ sẽ được tự động làm mới!
 
-### 3. Chế độ NotebookLM Đa Nguồn (Multi-Source Grounded Mode):
+### 3. Dạng bài Nói (Speaking Exam & Interview Assistant - Soạn kịch bản theo Level):
+* Bấm tổ hợp phím **`Alt + K`** *(MacBook: **`Option ⌥ + K`**)* hoặc nhấn nút **🗣️ Bài Nói** trên widget.
+* Extension tự động chụp màn hình đề bài nói (Part 1 Q&A, Cue Card Part 2, Discussion Part 3, Miêu tả tranh, Read Aloud, v.v.).
+* AI phân tích đề và mở ngay bảng **Teleprompter kịch bản nói thông minh**:
+  * **🎯 Chọn Level linh hoạt:**
+    * **🌱 A2 Cơ Bản (Band 4.0 - 5.0):** Câu ngắn, từ vựng thông dụng, dễ nhớ, dễ phát âm, không bị vấp.
+    * **⚡ B1-B2 Trung Cấp (Band 5.5 - 6.5):** Tự nhiên, mạch lạc, liên từ chuyển ý mượt mà (Furthermore, In my view), lập luận có ví dụ cụ thể.
+    * **🔥 C1-C2 Nâng Cao (Band 7.5 - 8.5+):** Từ vựng học thuật, idioms/collocations bản ngữ, cấu trúc ngữ pháp cao cấp (đảo ngữ, cleft sentences).
+  * **📜 Script Nói Teleprompter:** Chữ to rõ ràng, có dấu ngắt nhịp `<span style="color:#38bdf8;">|</span>` để bạn lấy hơi và ngắt nhịp tự nhiên như người bản xứ.
+  * **🇻🇳 Tùy chọn dịch nghĩa:** Bật/Tắt xem bản dịch tiếng Việt song song.
+  * **🧭 Dàn ý nhanh (Outline):** Các gạch đầu dòng ngắn gọn để bạn ứng biến linh hoạt nếu không muốn đọc thuộc lòng.
+  * **💎 Từ vựng ăn điểm & Mẹo phát âm:** Danh sách collocations ăn điểm kèm phiên âm IPA và hướng dẫn ngữ điệu.
+  * **🔊 Nghe đọc mẫu (Web Speech API):** Nhấn **Nghe Đọc Mẫu** để nghe giọng phát âm bản xứ chuẩn ngữ điệu trước khi nói.
+  * **📋 Sao chép 1 chạm:** Nhấn **Sao Chép Script** để dán nội dung vào bất kỳ đâu.
+  * **🔄 Đổi level tức thì:** Chỉ cần bấm chuyển nút level trên bảng, AI sẽ soạn ngay kịch bản mới cho level đó mà không cần mở lại cài đặt!
+
+### 4. Chế độ NotebookLM Đa Nguồn (Multi-Source Grounded Mode):
 * Mở Popup extension, tại mục **📚 Kho Tài Liệu (Đa Nguồn NotebookLM)**:
   * Bấm **📁 + Thêm file tài liệu** và chọn **nhiều file cùng một lúc** (giữ Ctrl hoặc Shift để chọn đồng thời nhiều file đề cương, slide, ngân hàng câu hỏi `.txt`, `.md`, `.json`, `.pdf`).
   * Hệ thống sử dụng cơ chế xử lý song song (`Promise.all`) đọc và tổng hợp đồng thời tất cả các tài liệu ngay lập tức.
   * Hiển thị danh sách từng file đã nạp, dung lượng, nút xóa riêng lẻ (✕) và nút xóa toàn bộ.
   * Popup hiển thị bảng thông báo thống kê tổng số file, dung lượng và số từ đã nạp thành công.
-* Khi bạn làm bài thi (bấm `Alt + S` hoặc `Alt + L`):
+* Khi bạn làm bài thi (bấm `Alt + S`, `Alt + L` hoặc `Alt + K`):
   * Gemini sẽ **đối chiếu câu hỏi và tìm đáp án trong toàn bộ kho tài liệu đã nạp** (Zero Hallucination).
   * Widget sẽ hiển thị: **Đáp án đúng** + **Trích dẫn bằng chứng cụ thể kèm tên file** (ví dụ: `[de_cuong.md]: Trích dẫn...`).
 
@@ -89,8 +90,10 @@ Extension được thiết kế theo mô hình **Hybrid Adaptor**, hoạt độn
 ## ⌨️ Bảng phím tắt điều khiển siêu tốc (Windows & macOS)
 * **`Alt + S`** *(MacBook: **`Option ⌥ + S`**)*: Chụp màn hình giải câu hỏi (Bài đọc, code, ảnh, sơ đồ - Tự động kèm ngữ cảnh nghe nếu có).
 * **`Alt + L`** *(MacBook: **`Option ⌥ + L`**)*: Bật / Tắt thu âm giải bài **Nghe (Listening)**.
+* **`Alt + K`** *(MacBook: **`Option ⌥ + K`**)*: Gợi ý kịch bản bài **Nói (Speaking)** theo level mong muốn (A2, B1-B2, C1-C2).
 * **`Alt + H`** *(MacBook: **`Option ⌥ + H`**)*: Ẩn / Hiện widget điều khiển.
 
 > 🍎 **Mẹo cho người dùng MacBook:**
 > - Phím `Alt` tương đương với phím **`Option` (`⌥`)** trên bàn phím Mac.
 > - Để xem và chỉnh sửa file ẩn `.env` trong Finder của macOS, bấm tổ hợp phím **`Cmd + Shift + .`** (Command + Shift + Dấu chấm).
+
