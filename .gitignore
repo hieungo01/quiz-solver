@@ -1,0 +1,16 @@
+# Secrets & Environment variables
+.env
+*.local
+
+# Browser Profiles & Session Caches (Prevent credential/cookie leakage)
+.chrome-profile/
+*.pma
+*.db
+*.db-journal
+*.log
+
+# Node & package files
+node_modules/
+.DS_Store
+Thumbs.db
+

@@ -9,8 +9,8 @@
 <body>
   <div class="container">
     <header class="header">
-      <div class="logo-area">
-        <span class="icon">🔮</span>
+      <div class="logo-area" style="display:flex; align-items:center; gap:8px;">
+        <img src="../icons/icon32.png" alt="AncestralWhisper" style="width:26px; height:26px; border-radius:6px; box-shadow:0 0 8px rgba(96,165,250,0.6);">
         <h2>AncestralWhisper</h2>
       </div>
       <label class="switch">
@@ -20,12 +20,15 @@
     </header>
 
     <div class="section">
-      <label for="apiKey">Gemini API Key</label>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label for="apiKey">Gemini API Key</label>
+        <span id="envKeyBadge" style="display:none; font-size:11px; color:#34d399; font-weight:600;">🌿 Đọc từ .env</span>
+      </div>
       <div class="input-group">
-        <input type="password" id="apiKey" placeholder="AIzaSy...">
+        <input type="password" id="apiKey" placeholder="AIzaSy... hoặc cấu hình trong file .env">
         <button id="toggleKeyVisibility" type="button" title="Show/Hide">👁️</button>
       </div>
-      <p class="hint">Lấy key miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a></p>
+      <p class="hint">🔒 Cấu hình trong file <code>.env</code> để bảo mật (không lưu vào bộ nhớ trình duyệt). Lấy key miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a></p>
     </div>
 
     <div class="section">
@@ -56,6 +59,42 @@
       </div>
     </div>
 
+    <!-- Cấu hình Trình độ Speaking -->
+    <div class="section" style="background:rgba(124, 58, 237, 0.12); border:1px solid rgba(124, 58, 237, 0.4); border-radius:8px; padding:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label for="speakingLevelSelect" style="color:#c4b5fd; font-weight:700;">🗣️ Trình Độ Bài Nói (Speaking Level)</label>
+        <span style="font-size:10px; color:#a78bfa; font-weight:600;">Alt + K</span>
+      </div>
+      <select id="speakingLevelSelect" style="margin-top:6px; background:#1e1b4b; border-color:#6d28d9; color:#f5f3ff;">
+        <option value="b1-b2" selected>⚡ B1 - B2: Trung cấp (Tự nhiên, liên từ mượt, Band 5.5 - 6.5)</option>
+        <option value="a2">🌱 A2: Cơ bản (Câu ngắn, từ vựng dễ, ít vấp, Band 4.0 - 5.0)</option>
+        <option value="c1-c2">🔥 C1 - C2: Nâng cao (Học thuật, idioms, tư duy sâu, Band 7.5 - 8.5+)</option>
+      </select>
+      <p class="hint" style="color:#ddd6fe; margin-top:4px;">AI sẽ tự động nhận diện đề thi nói và soạn kịch bản theo đúng cấp độ bạn đã chọn.</p>
+    </div>
+
+    <!-- NotebookLM Multi-Source Grounding -->
+    <div class="section" style="background:#1e1b4b; border:1px solid #6366f1; border-radius:8px; padding:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label style="color:#c7d2fe; font-weight:700;">📚 Kho Tài Liệu (Đa Nguồn NotebookLM)</label>
+        <label class="switch" style="transform: scale(0.8);" title="Bật/Tắt chế độ chỉ tìm trong tài liệu">
+          <input type="checkbox" id="sourceModeEnabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="hint" style="color:#a5b4fc; margin-top:2px;">Chọn nhiều file văn bản cùng lúc (Slide text, Đề cương, TXT, MD, JSON). AI sẽ đọc và tổng hợp đồng thời tất cả tài liệu.</p>
+      
+      <div style="margin-top:8px; display:flex; gap:6px;">
+        <input type="file" id="sourceFileInput" accept=".txt,.md,.json" multiple style="display:none;">
+        <button id="uploadSourceBtn" type="button" class="btn secondary" style="font-size:11px; padding:6px 10px; flex:1;">📁 + Thêm file tài liệu</button>
+        <button id="clearSourceBtn" type="button" class="btn secondary" style="font-size:11px; padding:6px 8px; display:none; color:#f87171;" title="Xóa toàn bộ tài liệu">🗑️ Xóa hết</button>
+      </div>
+
+      <!-- Danh sách các file đã nạp -->
+      <div id="sourceFilesList" style="margin-top:8px; display:flex; flex-direction:column; gap:4px; max-height:130px; overflow-y:auto;"></div>
+      <div id="sourceFilesSummary" style="display:none; font-size:10px; color:#38bdf8; margin-top:4px; text-align:right;"></div>
+    </div>
+
     <div class="section footer-actions">
       <button id="saveBtn" class="btn primary">Lưu cấu hình</button>
       <button id="testBtn" class="btn secondary">Kiểm tra kết nối</button>
@@ -64,9 +103,10 @@
     <div id="statusMessage" class="status-msg"></div>
 
     <div class="shortcuts-info">
-      <div>💡 <b>Alt + S</b>: Chụp màn hình giải bài (Skillups & mọi web)</div>
-      <div>🎧 <b>Alt + L</b>: Bật/Tắt thu âm bài nghe <b>Listening</b></div>
-      <div>👁️ <b>Alt + H</b>: Ẩn/Hiện widget điều khiển nhanh</div>
+      <div>💡 <b>Alt + S</b> <i>(Mac: Option ⌥ + S)</i>: Chụp màn hình giải bài</div>
+      <div>🎧 <b>Alt + L</b> <i>(Mac: Option ⌥ + L)</i>: Bật/Tắt thu âm bài nghe <b>Listening</b></div>
+      <div>🗣️ <b>Alt + K</b> <i>(Mac: Option ⌥ + K)</i>: Gợi ý kịch bản bài nói <b>Speaking</b> theo level</div>
+      <div>👁️ <b>Alt + H</b> <i>(Mac: Option ⌥ + H)</i>: Ẩn/Hiện widget điều khiển</div>
     </div>
   </div>
 
@@ -78,6 +118,22 @@
       <p id="modalModelText">Model đang hoạt động: <b>gemini-3.8-flash</b></p>
       <div class="modal-badge">Sẵn sàng giải bài trên Skillups</div>
       <button id="closeModalBtn" class="btn primary" style="width:100%; margin-top:12px;">Bắt đầu sử dụng</button>
+    </div>
+  </div>
+
+  <!-- Modal thông báo nạp tài liệu NotebookLM thành công -->
+  <div id="docSuccessModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="border-color:#10b981;">
+      <div class="modal-icon">📚</div>
+      <h3 style="color:#34d399;">Đã Nạp Tài Liệu Thành Công!</h3>
+      <p id="modalDocText" style="margin-top:8px; line-height:1.5;">Tài liệu: <b>de_cuong.txt</b></p>
+      <div class="modal-badge" style="background:rgba(99, 102, 241, 0.2); color:#c7d2fe; border-color:#6366f1;">
+        ✨ Chế độ NotebookLM đã bật
+      </div>
+      <p style="font-size:11px; color:#94a3b8; margin-top:10px;">
+        AI sẽ ưu tiên đối chiếu và trích dẫn bằng chứng từ tài liệu này khi bạn bấm <b>Alt + S</b>.
+      </p>
+      <button id="closeDocModalBtn" class="btn primary" style="width:100%; margin-top:12px; background:#10b981;">Tuyệt vời, đã hiểu!</button>
     </div>
   </div>
 
